@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表：账号密码登录，手机号仅作资料不验证
+model User {
+  id             Int          @id @default(autoincrement())
+  username       String       @unique
+  passwordHash   String
+  phone          String?
+  role           String       @default("USER") // USER 普通用户 / ADMIN 管理员
+  points         Int          @default(0)
+  createdAt      DateTime     @default(now())
+  publishedTasks Task[]       @relation("Publisher")
+  claims         TaskClaim[]
+  pointLogs      PointLog[]
+}
+
+// 任务表：发布 → 接单 → 确认完成
+model Task {
+  id          Int         @id @default(autoincrement())
+  title       String
+  content     String
+  points      Int // 完成后接单人可得的积分
+  deadline    DateTime?
+  status      String      @default("OPEN") // OPEN 招募中 / PENDING 待确认 / DONE 已完成 / CANCELLED 已取消
+  createdAt   DateTime    @default(now())
+  publisherId Int
+  publisher   User        @relation("Publisher", fields: [publisherId], references: [id])
+  claim       TaskClaim?
+}
+
+// 接单记录：一个任务只有一条生效记录
+model TaskClaim {
+  id          Int       @id @default(autoincrement())
+  taskId      Int       @unique
+  task        Task      @relation(fields: [taskId], references: [id])
+  claimantId  Int
+  claimant    User      @relation(fields: [claimantId], references: [id])
+  status      String    @default("PENDING") // PENDING 待发单人确认 / CONFIRMED 已确认
+  createdAt   DateTime  @default(now())
+  confirmedAt DateTime?
+}
+
+// 积分流水：每笔加减分都记一笔
+model PointLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  delta     Int // 正数加、负数减
+  reason    String
+  createdAt DateTime @default(now())
+}

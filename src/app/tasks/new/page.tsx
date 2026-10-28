@@ -15,6 +15,19 @@ export default function NewTaskPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!title.trim()) {
+      setError("请填写任务标题");
+      return;
+    }
+    if (!content.trim()) {
+      setError("请填写任务要求（详情）");
+      return;
+    }
+    const p = Number(points);
+    if (!points.trim() || !Number.isInteger(p) || p < 0) {
+      setError("积分必须是不小于 0 的整数");
+      return;
+    }
     setLoading(true);
     const res = await fetch("/api/tasks", {
       method: "POST",
@@ -22,7 +35,7 @@ export default function NewTaskPage() {
       body: JSON.stringify({
         title,
         content,
-        points: Number(points),
+        points: p,
         deadline: deadline || null,
       }),
     });
@@ -48,12 +61,14 @@ export default function NewTaskPage() {
           placeholder="任务标题，如：周三 8:00 横店群演 20 名"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          required
         />
         <textarea
           className={`${input} min-h-24`}
-          placeholder="任务详情：要求、集合地点、注意事项等（具体沟通在群里进行）"
+          placeholder="任务要求：要求、集合地点、注意事项等（具体沟通在群里进行）"
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          required
         />
         <div className="flex gap-3">
           <label className="flex-1 text-xs text-zinc-500">

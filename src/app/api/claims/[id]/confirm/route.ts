@@ -43,6 +43,15 @@ export async function POST(
           reason: `完成任务《${task.title}》`,
         },
       });
+      // 站内消息：通知接单人积分到账
+      await tx.notification.create({
+        data: {
+          userId: claim.claimantId,
+          type: "CONFIRMED",
+          title: "积分到账",
+          content: `任务《${task.title}》已被确认完成，积分 +${task.points}`,
+        },
+      });
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

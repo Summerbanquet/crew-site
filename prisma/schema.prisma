@@ -20,6 +20,7 @@ model User {
   claims         TaskClaim[]
   pointLogs      PointLog[]
     redeems     RedeemLog[]
+  notifications  Notification[]
 }
 
 // 任务表：发布 → 接单 → 确认完成
@@ -80,4 +81,16 @@ model RedeemLog {
   pointsSpent Int
   status      String   @default("PENDING") // PENDING 待发货 / DONE 已完成
   createdAt   DateTime @default(now())
+}
+
+// 站内消息：接单待确认 / 接取成功 / 积分变化等提醒
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  type      String // CLAIM 有人接了你的单（待确认）/ CLAIMED 接取成功 / CONFIRMED 确认完成积分到账 / REDEEM 兑换扣分
+  title     String
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

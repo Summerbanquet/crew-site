@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [wechat, setWechat] = useState("");
@@ -24,12 +22,12 @@ export default function RegisterPage() {
     });
     setLoading(false);
     if (res.ok) {
-      router.push("/profile");
-      router.refresh();
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "注册失败");
+      // 注册即登录，同样硬导航清掉缓存的老 layout（原因见 login 页注释）
+      window.location.assign("/profile");
+      return;
     }
+    const data = await res.json().catch(() => ({}));
+    setError(data.error ?? "注册失败");
   };
 
   return (

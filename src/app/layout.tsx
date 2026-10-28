@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
+import NotificationCenter from "@/components/NotificationCenter";
+import ToastHost from "@/components/ToastHost";
 import "./globals.css";
 
 
@@ -24,6 +26,7 @@ export default async function RootLayout({
   return (
     <html lang="zh-CN" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-white text-zinc-900">
+        <ToastHost />
         <header className="border-b border-zinc-200 bg-white">
           <nav className="mx-auto flex h-12 w-full max-w-3xl items-center gap-5 px-4 text-sm">
             <Link href="/" className="font-bold text-zinc-900">
@@ -45,15 +48,18 @@ export default async function RootLayout({
             </Link>
             <div className="ml-auto flex items-center gap-5">
               {user ? (
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 rounded px-1 py-1 hover:bg-zinc-100"
-                >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-xs font-medium text-white">
-                    {user.username.charAt(0).toUpperCase()}
-                  </span>
-                  <span className={navLink}>{user.username}</span>
-                </Link>
+                <>
+                  <NotificationCenter />
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 rounded px-1 py-1 hover:bg-zinc-100"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-xs font-medium text-white">
+                      {user.username.charAt(0).toUpperCase()}
+                    </span>
+                    <span className={navLink}>{user.username}</span>
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link href="/login" className={navLink}>

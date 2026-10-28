@@ -25,6 +25,23 @@ export async function POST(
         where: { id: task.id },
         data: { status: "PENDING" },
       });
+      // 站内消息：发布人（待确认）+ 接单人（接取成功）
+      await tx.notification.createMany({
+        data: [
+          {
+            userId: task.publisherId,
+            type: "CLAIM",
+            title: "待确认",
+            content: `「${user.username}」接取了你的任务《${task.title}》，请在个人主页确认完成`,
+          },
+          {
+            userId: user.id,
+            type: "CLAIMED",
+            title: "接取成功",
+            content: `你成功接取了任务《${task.title}》，发布人确认后积分 +${task.points} 到账`,
+          },
+        ],
+      });
       return c;
     });
     return NextResponse.json({ claim });

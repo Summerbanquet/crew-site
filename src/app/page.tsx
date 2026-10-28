@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { refreshNotifications } from "@/lib/notify";
 
 type Task = {
   id: number;
@@ -45,6 +46,7 @@ export default function TaskHall() {
     const res = await fetch(`/api/tasks/${taskId}/claim`, { method: "POST" });
     if (res.ok) {
       load();
+      refreshNotifications(); // 立即拉新通知，顶部弹"接取成功"
     } else {
       const data = await res.json().catch(() => ({}));
       setMsg(data.error ?? "接单失败");

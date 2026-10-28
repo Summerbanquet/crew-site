@@ -26,6 +26,9 @@ export async function POST(req: Request) {
   if (!title || !String(title).trim()) {
     return NextResponse.json({ error: "标题不能为空" }, { status: 400 });
   }
+  if (!content || !String(content).trim()) {
+    return NextResponse.json({ error: "任务要求（详情）不能为空" }, { status: 400 });
+  }
   const p = Number(points);
   if (!Number.isInteger(p) || p < 0) {
     return NextResponse.json({ error: "积分必须是不小于 0 的整数" }, { status: 400 });

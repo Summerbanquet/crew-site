@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,14 +18,15 @@ export default function LoginPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-    setLoading(false);
     if (res.ok) {
-      router.push("/profile");
-      router.refresh();
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "登录失败");
+      // 登录切换全局身份，必须硬导航整页刷新：
+      // 客户端路由会复用缓存的老 layout（老头像），refresh 与 push 有时序竞争救不回来
+      window.location.assign("/profile");
+      return;
     }
+    setLoading(false);
+    const data = await res.json().catch(() => ({}));
+    setError(data.error ?? "登录失败");
   };
 
   return (

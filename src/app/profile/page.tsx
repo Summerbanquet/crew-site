@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { refreshNotifications } from "@/lib/notify";
 
 type Me = {
   user: { id: number; username: string; role: string; wechat: string | null; points: number };
@@ -30,7 +30,6 @@ const taskStatus: Record<string, string> = {
 const claimStatus: Record<string, string> = { PENDING: "待发单人确认", CONFIRMED: "已确认，积分到账" };
 
 export default function ProfilePage() {
-  const router = useRouter();
   const [data, setData] = useState<Me | null>(null);
   const [notLogin, setNotLogin] = useState(false);
   const [msg, setMsg] = useState("");
@@ -53,6 +52,7 @@ export default function ProfilePage() {
     const res = await fetch(`/api/claims/${claimId}/confirm`, { method: "POST" });
     if (res.ok) {
       load();
+      refreshNotifications(); // 立即拉新通知（对方会收到"积分到账"顶部提醒）
     } else {
       const d = await res.json().catch(() => ({}));
       setMsg(d.error ?? "确认失败");
@@ -61,8 +61,8 @@ export default function ProfilePage() {
 
   const logout = async () => {
     await fetch("/api/logout", { method: "POST" });
-    router.push("/");
-    router.refresh();
+    // 退出同样硬导航，避免导航栏残留已登录头像（原因见 login 页注释）
+    window.location.assign("/");
   };
 
   if (notLogin) {

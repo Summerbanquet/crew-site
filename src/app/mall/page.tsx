@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { refreshNotifications } from "@/lib/notify";
 
 type Item = { id: number; name: string; description: string; icon: string; cost: number };
 
@@ -26,11 +27,10 @@ export default function MallPage() {
       body: JSON.stringify({ itemId }),
     });
     if (r.ok) {
-      alert("🎉 兑换成功！积分已扣除");
       loadMe();
+      refreshNotifications(); // 立即拉新通知，顶部弹"积分变动"
     } else {
       const d = await r.json().catch(() => ({}));
-      alert(d.error ?? "兑换失败");
       setMsg(d.error ?? "兑换失败");
     }
   };

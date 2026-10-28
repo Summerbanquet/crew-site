@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { refreshNotifications } from "@/lib/notify";
 
 type Task = {
   id: number;
@@ -56,6 +57,7 @@ export default function TaskDetailPage() {
     setClaiming(false);
     if (res.ok) {
       load();
+      refreshNotifications(); // 立即拉新通知，顶部弹"接取成功"
     } else {
       const data = await res.json().catch(() => ({}));
       setMsg(data.error ?? "接单失败");

@@ -24,6 +24,15 @@ export async function POST(req: Request) {
       await tx.redeemLog.create({
         data: { userId: user.id, itemId: item.id, pointsSpent: item.cost },
       });
+      // 站内消息：兑换扣分提醒
+      await tx.notification.create({
+        data: {
+          userId: user.id,
+          type: "REDEEM",
+          title: "积分变动",
+          content: `兑换《${item.name}》成功，积分 -${item.cost}`,
+        },
+      });
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

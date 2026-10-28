@@ -36,7 +36,7 @@
 
 - **栈**：Next.js 16（App Router + TypeScript + Tailwind）+ Prisma 6.19（锁定 6.x）+ SQLite
 - **项目位置**：`C:\Users\xiaya\Desktop\剧组网站\crew-site`（长期开发目录）
-- **GitHub 仓库**：https://github.com/Summerbanquet/crew-site （公开，master 分支；本地 2 个 commit，**2026-10-28 时点有大量未提交改动**：积分商城全套、三级角色、头像导航、任务详情页、微信群昵称、商品管理、防崩钩子——接手后第一件事建议 commit；.env / dev.db / node_modules 已确认不在仓库里）
+- **GitHub 仓库**：https://github.com/Summerbanquet/crew-site （公开，master 分支；本地与远程同步，最新 commit 96e600b「feat: 积分商城 + 三级角色 + 任务详情页」已于 2026-10-28 推送，包含此前全部改动：积分商城全套、三级角色、头像导航、任务详情页、微信群昵称、商品管理、防崩钩子；.env / dev.db / node_modules 已确认不在仓库里）
 - **数据库六张表**：User / Task / TaskClaim / PointLog / Item / RedeemLog（schema 在 `prisma/schema.prisma`，库文件 `prisma/dev.db`）
 - **API**：register / login / logout / me / tasks(GET列表,POST发布) / tasks/[id](GET详情) / tasks/[id]/claim / claims/[id]/confirm / items(GET商品,?all=1管理端全部,POST新增) / items/[id](PUT编辑/上下架) / redeem(POST兑换)
 - **页面**：/ 任务大厅、/tasks/[id] 任务详情、/login、/register、/profile、/tasks/new、/mall、/mall/manage 商品管理（仅 ADMIN）

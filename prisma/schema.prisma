@@ -23,28 +23,28 @@ model User {
   notifications  Notification[]
 }
 
-// 任务表：发布 → 接单 → 确认完成
+// 任务表：发布 → 多人接取 → 发布人选中一人完成
 model Task {
   id          Int         @id @default(autoincrement())
   title       String
   content     String
-  points      Int // 完成后接单人可得的积分
+  points      Int // 完成后被选中的接单人可得的积分
   deadline    DateTime?
-  status      String      @default("OPEN") // OPEN 招募中 / PENDING 待确认 / DONE 已完成 / CANCELLED 已取消
+  status      String      @default("OPEN") // OPEN 招募中（可多人接取）/ DONE 已完成 / CANCELLED 已取消
   createdAt   DateTime    @default(now())
   publisherId Int
   publisher   User        @relation("Publisher", fields: [publisherId], references: [id])
-  claim       TaskClaim?
+  claims      TaskClaim[]
 }
 
-// 接单记录：一个任务只有一条生效记录
+// 接单记录：一个任务多人接取，发布人从中选中一条
 model TaskClaim {
   id          Int       @id @default(autoincrement())
-  taskId      Int       @unique
+  taskId      Int
   task        Task      @relation(fields: [taskId], references: [id])
   claimantId  Int
   claimant    User      @relation(fields: [claimantId], references: [id])
-  status      String    @default("PENDING") // PENDING 待发单人确认 / CONFIRMED 已确认
+  status      String    @default("PENDING") // PENDING 已接取待选择 / CONFIRMED 被选中完成 / REJECTED 未被选中
   createdAt   DateTime  @default(now())
   confirmedAt DateTime?
 }

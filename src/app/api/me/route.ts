@@ -17,7 +17,10 @@ export async function GET() {
       where: { publisherId: user.id },
       orderBy: { createdAt: "desc" },
       include: {
-        claim: { include: { claimant: { select: { id: true, username: true } } } },
+        claims: {
+          orderBy: { createdAt: "asc" },
+          include: { claimant: { select: { id: true, username: true } } },
+        },
       },
     }),
     prisma.taskClaim.findMany({

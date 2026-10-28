@@ -12,7 +12,7 @@ type Me = {
     title: string;
     points: number;
     status: string;
-    claim: { id: number; status: string; claimant: { username: string } } | null;
+    claims: { id: number; status: string; claimant: { username: string } }[];
   }[];
   claims: {
     id: number;
@@ -23,11 +23,14 @@ type Me = {
 
 const taskStatus: Record<string, string> = {
   OPEN: "招募中",
-  PENDING: "待确认",
   DONE: "已完成",
   CANCELLED: "已取消",
 };
-const claimStatus: Record<string, string> = { PENDING: "待发单人确认", CONFIRMED: "已确认，积分到账" };
+const claimStatus: Record<string, string> = {
+  PENDING: "待发布人选择",
+  CONFIRMED: "被选中，积分到账",
+  REJECTED: "未被选中",
+};
 
 export default function ProfilePage() {
   const [data, setData] = useState<Me | null>(null);
@@ -77,7 +80,9 @@ export default function ProfilePage() {
   if (!data) return <p className="py-12 text-center text-zinc-400">加载中...</p>;
 
   const { user, pointLogs, publishedTasks, claims } = data;
-  const pendingCount = publishedTasks.filter((t) => t.claim?.status === "PENDING").length;
+  const pendingCount = publishedTasks.filter(
+    (t) => t.status === "OPEN" && t.claims.some((c) => c.status === "PENDING")
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -129,7 +134,7 @@ export default function ProfilePage() {
             我发布的
             {pendingCount > 0 && (
               <span className="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
-                {pendingCount} 条待确认
+                {pendingCount} 条有报名待选
               </span>
             )}
           </h2>
@@ -140,27 +145,42 @@ export default function ProfilePage() {
                 {(user.role === "ADMIN" || user.role === "SHOOTER") && <Link href="/tasks/new" className="underline">去发布</Link>}
               </li>
             )}
-            {publishedTasks.map((t) => (
-              <li key={t.id} className="flex flex-wrap items-center gap-2 py-2">
-                <span className="font-medium">{t.title}</span>
-                <span className="text-xs text-zinc-400">{taskStatus[t.status] ?? t.status}</span>
-                {t.claim && (
-                  <span className="text-xs text-zinc-500">
-                    接单人：{t.claim.claimant.username}
-                  </span>
-                )}
-                {t.claim?.status === "PENDING" ? (
-                  <button
-                    onClick={() => confirm(t.claim!.id)}
-                    className="ml-auto rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-500"
-                  >
-                    确认完成（+{t.points} 分到账）
-                  </button>
-                ) : (
-                  <span className="ml-auto text-xs text-amber-600">+{t.points} 分</span>
-                )}
-              </li>
-            ))}
+            {publishedTasks.map((t) => {
+              const pending = t.claims.filter((c) => c.status === "PENDING");
+              const chosen = t.claims.find((c) => c.status === "CONFIRMED");
+              return (
+                <li key={t.id} className="py-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{t.title}</span>
+                    <span className="text-xs text-zinc-400">{taskStatus[t.status] ?? t.status}</span>
+                    <span className="ml-auto text-xs text-amber-600">+{t.points} 分</span>
+                  </div>
+                  {t.status === "OPEN" && pending.length > 0 && (
+                    <div className="mt-1.5 space-y-1.5">
+                      {pending.map((c) => (
+                        <div key={c.id} className="flex items-center gap-2 text-xs">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-medium text-white">
+                            {c.claimant.username.charAt(0).toUpperCase()}
+                          </span>
+                          <span className="text-zinc-600">{c.claimant.username}</span>
+                          <button
+                            onClick={() => confirm(c.id)}
+                            className="ml-auto rounded bg-green-600 px-3 py-1 font-medium text-white hover:bg-green-500"
+                          >
+                            选 TA 完成（+{t.points} 分到账）
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {chosen && (
+                    <div className="mt-1 text-xs text-zinc-400">
+                      完成人：{chosen.claimant.username}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
 

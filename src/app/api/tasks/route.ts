@@ -8,7 +8,7 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
     include: {
       publisher: { select: { username: true } },
-      claim: { include: { claimant: { select: { username: true } } } },
+      claims: { include: { claimant: { select: { username: true } } } },
     },
   });
   return NextResponse.json({ tasks });

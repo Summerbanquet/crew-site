@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 
-// 确认接单：任务完成，接单人积分到账并记一笔流水
+// 选中接取人：被选中者积分到账，同任务其他接取者落选，双方都发通知
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -17,16 +17,22 @@ export async function POST(
         where: { id: Number(id) },
         include: { task: true },
       });
-      if (!claim) throw new Error("接单记录不存在");
+      if (!claim) throw new Error("接取记录不存在");
       const task = claim.task;
       if (task.publisherId !== user.id && user.role !== "ADMIN") {
-        throw new Error("只有任务发布人可以确认");
+        throw new Error("只有任务发布人可以选择");
       }
-      if (claim.status !== "PENDING") throw new Error("该记录已处理过，不要重复确认");
+      if (task.status !== "OPEN") throw new Error("该任务已结束，不要重复选择");
+      if (claim.status !== "PENDING") throw new Error("该记录已处理过");
 
       await tx.taskClaim.update({
         where: { id: claim.id },
         data: { status: "CONFIRMED", confirmedAt: new Date() },
+      });
+      // 其余接取者落选
+      const rejected = await tx.taskClaim.updateMany({
+        where: { taskId: task.id, status: "PENDING", id: { not: claim.id } },
+        data: { status: "REJECTED" },
       });
       await tx.task.update({
         where: { id: task.id },
@@ -43,20 +49,34 @@ export async function POST(
           reason: `完成任务《${task.title}》`,
         },
       });
-      // 站内消息：通知接单人积分到账
+      // 通知：被选中者积分到账；落选者提醒
       await tx.notification.create({
         data: {
           userId: claim.claimantId,
           type: "CONFIRMED",
           title: "积分到账",
-          content: `任务《${task.title}》已被确认完成，积分 +${task.points}`,
+          content: `你被选中完成任务《${task.title}》，积分 +${task.points}`,
         },
       });
+      if (rejected.count > 0) {
+        const others = await tx.taskClaim.findMany({
+          where: { taskId: task.id, status: "REJECTED" },
+          select: { claimantId: true },
+        });
+        await tx.notification.createMany({
+          data: others.map((o) => ({
+            userId: o.claimantId,
+            type: "REJECTED",
+            title: "未被选中",
+            content: `任务《${task.title}》已选他人完成，下次再来`,
+          })),
+        });
+      }
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "确认失败" },
+      { error: e instanceof Error ? e.message : "选择失败" },
       { status: 400 }
     );
   }

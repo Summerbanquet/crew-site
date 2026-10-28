@@ -8,11 +8,12 @@ export type Notice = {
   createdAt: string;
 };
 
-// 各类消息的小圆点颜色：接单待确认橙、接取/确认完成绿、兑换灰
+// 各类消息的小圆点颜色：有人接取橙、接取绿、选中到账绿、落选红、兑换灰
 export const dotColor: Record<string, string> = {
   CLAIM: "bg-amber-500",
   CLAIMED: "bg-emerald-500",
   CONFIRMED: "bg-emerald-500",
+  REJECTED: "bg-red-400",
   REDEEM: "bg-zinc-400",
 };
 

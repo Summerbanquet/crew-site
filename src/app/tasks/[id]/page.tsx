@@ -14,12 +14,11 @@ type Task = {
   status: string;
   createdAt: string;
   publisher: { username: string };
-  claim: { claimant: { username: string } } | null;
+  claims: { id: number; status: string; claimant: { username: string } }[];
 };
 
 const statusText: Record<string, { label: string; cls: string }> = {
   OPEN: { label: "招募中", cls: "bg-green-100 text-green-700" },
-  PENDING: { label: "待确认", cls: "bg-amber-100 text-amber-700" },
   DONE: { label: "已完成", cls: "bg-zinc-200 text-zinc-600" },
   CANCELLED: { label: "已取消", cls: "bg-red-100 text-red-700" },
 };
@@ -27,7 +26,7 @@ const statusText: Record<string, { label: string; cls: string }> = {
 export default function TaskDetailPage() {
   const params = useParams<{ id: string }>();
   const [task, setTask] = useState<Task | null>(null);
-  const [me, setMe] = useState<{ username: string } | null>(null);
+  const [me, setMe] = useState<{ username: string; role: string } | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [msg, setMsg] = useState("");
   const [claiming, setClaiming] = useState(false);
@@ -60,7 +59,20 @@ export default function TaskDetailPage() {
       refreshNotifications(); // 立即拉新通知，顶部弹"接取成功"
     } else {
       const data = await res.json().catch(() => ({}));
-      setMsg(data.error ?? "接单失败");
+      setMsg(data.error ?? "接取失败");
+    }
+  };
+
+  // 选人完成：发布人/管理员从接取列表中选中一人
+  const select = async (claimId: number) => {
+    setMsg("");
+    const res = await fetch(`/api/claims/${claimId}/confirm`, { method: "POST" });
+    if (res.ok) {
+      load();
+      refreshNotifications();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setMsg(data.error ?? "选择失败");
     }
   };
 
@@ -74,8 +86,18 @@ export default function TaskDetailPage() {
   if (!task) return <p className="py-12 text-center text-zinc-400">加载中...</p>;
 
   const st = statusText[task.status] ?? { label: task.status, cls: "bg-zinc-100 text-zinc-600" };
+  const pending = task.claims.filter((c) => c.status === "PENDING");
+  const chosen = task.claims.find((c) => c.status === "CONFIRMED");
   const canClaim =
-    task.status === "OPEN" && me && me.username !== task.publisher.username;
+    task.status === "OPEN" &&
+    me !== null &&
+    me.username !== task.publisher.username &&
+    !pending.some((c) => c.claimant.username === me.username);
+  const canSelect =
+    task.status === "OPEN" &&
+    pending.length > 0 &&
+    me !== null &&
+    (me.username === task.publisher.username || me.role === "ADMIN");
 
   return (
     <div className="space-y-4">
@@ -94,13 +116,39 @@ export default function TaskDetailPage() {
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-3 text-xs text-zinc-400">
           <span>发布人：{task.publisher.username}</span>
           {task.deadline && <span>截止：{new Date(task.deadline).toLocaleString("zh-CN")}</span>}
-          {task.claim && <span>接单人：{task.claim.claimant.username}</span>}
+          {task.status === "OPEN" && pending.length > 0 && (
+            <span className="text-amber-600">{pending.length} 人已接</span>
+          )}
+          {chosen && <span>完成人：{chosen.claimant.username}</span>}
           <span>发布时间：{new Date(task.createdAt).toLocaleString("zh-CN")}</span>
         </div>
         {msg && (
           <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
             {msg}
           </p>
+        )}
+        {canSelect && (
+          <div className="mt-4 rounded border border-zinc-200 bg-zinc-50 p-3">
+            <p className="text-xs text-zinc-500">
+              选择接单人（选中即完成，TA 得 {task.points} 分，其余落选）：
+            </p>
+            <div className="mt-2 space-y-1.5">
+              {pending.map((c) => (
+                <div key={c.id} className="flex items-center gap-3 text-sm">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-xs font-medium text-white">
+                    {c.claimant.username.charAt(0).toUpperCase()}
+                  </span>
+                  <span>{c.claimant.username}</span>
+                  <button
+                    onClick={() => select(c.id)}
+                    className="ml-auto rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-500"
+                  >
+                    选 TA 完成（+{task.points} 分）
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
         <div className="mt-4">
           {canClaim ? (

@@ -16,7 +16,7 @@ export async function GET(
     where: { id: numId },
     include: {
       publisher: { select: { username: true } },
-      claim: { include: { claimant: { select: { username: true } } } },
+      claims: { include: { claimant: { select: { username: true } } } },
     },
   });
   if (!task) return NextResponse.json({ error: "任务不存在" }, { status: 404 });

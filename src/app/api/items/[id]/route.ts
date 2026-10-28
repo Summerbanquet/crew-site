@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { logOp } from "@/lib/oplog";
 
 // 编辑商品（仅管理员）：名称 / 描述 / 图标 / 积分价 / 上下架
 export async function PUT(
@@ -40,6 +41,16 @@ export async function PUT(
       ...(c !== undefined && { cost: c }),
       ...(active !== undefined && { active: Boolean(active) }),
     },
+  });
+  await logOp({
+    userId: user.id,
+    username: user.username,
+    action: "ITEM_UPDATE",
+    detail:
+      active !== undefined && name === undefined
+        ? `${active ? "上架" : "下架"}商品《${item.name}》`
+        : `编辑商品《${item.name}》`,
+    req,
   });
   return NextResponse.json({ item });
 }

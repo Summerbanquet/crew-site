@@ -8,6 +8,7 @@ export default function NewTaskPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [points, setPoints] = useState("10");
+  const [headcount, setHeadcount] = useState("1");
   const [deadline, setDeadline] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,11 @@ export default function NewTaskPage() {
       setError("积分必须是不小于 0 的整数");
       return;
     }
+    const h = Number(headcount);
+    if (!headcount.trim() || !Number.isInteger(h) || h < 1) {
+      setError("人数必须是大于 0 的整数");
+      return;
+    }
     setLoading(true);
     const res = await fetch("/api/tasks", {
       method: "POST",
@@ -36,6 +42,7 @@ export default function NewTaskPage() {
         title,
         content,
         points: p,
+        headcount: h,
         deadline: deadline || null,
       }),
     });
@@ -70,8 +77,8 @@ export default function NewTaskPage() {
           onChange={(e) => setContent(e.target.value)}
           required
         />
-        <div className="flex gap-3">
-          <label className="flex-1 text-xs text-zinc-500">
+        <div className="grid grid-cols-3 gap-3">
+          <label className="text-xs text-zinc-500">
             完成可得积分
             <input
               type="number"
@@ -79,9 +86,21 @@ export default function NewTaskPage() {
               className={`${input} mt-1`}
               value={points}
               onChange={(e) => setPoints(e.target.value)}
+              required
             />
           </label>
-          <label className="flex-1 text-xs text-zinc-500">
+          <label className="text-xs text-zinc-500">
+            需要人数
+            <input
+              type="number"
+              min={1}
+              className={`${input} mt-1`}
+              value={headcount}
+              onChange={(e) => setHeadcount(e.target.value)}
+              required
+            />
+          </label>
+          <label className="text-xs text-zinc-500">
             截止时间（选填）
             <input
               type="datetime-local"

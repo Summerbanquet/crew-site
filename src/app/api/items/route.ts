@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { logOp } from "@/lib/oplog";
 
 // 商品列表：默认只显示上架的（未登录也能看）；管理员带 ?all=1 可看全部（含下架）
 export async function GET(req: Request) {
@@ -44,6 +45,13 @@ export async function POST(req: Request) {
       icon: String(icon ?? "").trim() || "🎁",
       cost: c,
     },
+  });
+  await logOp({
+    userId: user.id,
+    username: user.username,
+    action: "ITEM_CREATE",
+    detail: `新增商品《${item.name}》（${c} 分）`,
+    req,
   });
   return NextResponse.json({ item });
 }

@@ -12,6 +12,15 @@ type Item = {
   active: boolean;
 };
 
+type Redeem = {
+  id: number;
+  pointsSpent: number;
+  status: string;
+  createdAt: string;
+  user: { username: string };
+  item: { name: string; icon: string };
+};
+
 const input =
   "w-full rounded border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900";
 
@@ -19,6 +28,7 @@ export default function ManageMallPage() {
   const [me, setMe] = useState<{ role: string } | null>(null);
   const [meLoaded, setMeLoaded] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
+  const [redeems, setRedeems] = useState<Redeem[]>([]);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
@@ -51,9 +61,34 @@ export default function ManageMallPage() {
     }
   };
 
+  const loadRedeems = async () => {
+    const r = await fetch("/api/admin/redeems");
+    if (r.ok) {
+      const d = await r.json();
+      setRedeems(d.redeems ?? []);
+    }
+  };
+
   useEffect(() => {
-    if (me?.role === "ADMIN") load();
+    if (me?.role === "ADMIN") {
+      load();
+      loadRedeems();
+    }
   }, [me]);
+
+  // 标记发货
+  const ship = async (id: number) => {
+    setMsg("");
+    setErr("");
+    const r = await fetch(`/api/redeems/${id}`, { method: "PUT" });
+    if (r.ok) {
+      setMsg("已标记发货");
+      loadRedeems();
+    } else {
+      const d = await r.json().catch(() => ({}));
+      setErr(d.error ?? "操作失败");
+    }
+  };
 
   const create = async () => {
     setMsg("");
@@ -147,7 +182,7 @@ export default function ManageMallPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center">
-        <h1 className="text-xl font-bold">商品管理</h1>
+        <h1 className="text-xl font-bold">商城管理</h1>
         <Link href="/mall" className="ml-auto text-sm text-zinc-500 hover:text-zinc-900">
           ← 返回积分商城
         </Link>
@@ -247,6 +282,46 @@ export default function ManageMallPage() {
             )}
           </div>
         ))}
+      </div>
+
+      {/* 兑换记录 */}
+      <div className="rounded-lg border border-zinc-200 bg-white p-4">
+        <h2 className="font-semibold">兑换记录（{redeems.length}）</h2>
+        <ul className="mt-3 divide-y divide-zinc-100 text-sm">
+          {redeems.length === 0 && (
+            <li className="py-2 text-zinc-400">还没有兑换记录</li>
+          )}
+          {redeems.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-center gap-3 py-2">
+              <span className="text-xl">{r.item.icon}</span>
+              <span className="font-medium">{r.user.username}</span>
+              <span className="text-xs text-zinc-500">兑换《{r.item.name}》</span>
+              <span className="text-xs text-amber-600">-{r.pointsSpent} 分</span>
+              <span className="text-xs text-zinc-400">
+                {new Date(r.createdAt).toLocaleString("zh-CN")}
+              </span>
+              <span className="ml-auto flex items-center gap-2">
+                <span
+                  className={`rounded px-2 py-0.5 text-xs ${
+                    r.status === "DONE"
+                      ? "bg-zinc-200 text-zinc-500"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {r.status === "DONE" ? "已发货" : "待发货"}
+                </span>
+                {r.status === "PENDING" && (
+                  <button
+                    onClick={() => ship(r.id)}
+                    className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-500"
+                  >
+                    标记已发货
+                  </button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

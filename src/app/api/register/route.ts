@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { createSession } from "@/lib/auth";
+import { logOp } from "@/lib/oplog";
 
 export async function POST(req: Request) {
   const { username, password, wechat, role } = await req.json();
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
   const name = String(username).trim();
   const exists = await prisma.user.findUnique({ where: { username: name } });
   if (exists) {
+    await logOp({ username: name, action: "REGISTER", detail: "注册失败：用户名已被占用", ok: false, req });
     return NextResponse.json({ error: "用户名已被占用" }, { status: 409 });
   }
 
@@ -32,6 +34,13 @@ export async function POST(req: Request) {
   });
 
   await createSession({ uid: user.id, username: user.username, role: user.role });
+  await logOp({
+    userId: user.id,
+    username: user.username,
+    action: "REGISTER",
+    detail: `注册成功（${roleValue === "SHOOTER" ? "拍摄" : "普通演员"}）`,
+    req,
+  });
   return NextResponse.json({
     user: { id: user.id, username: user.username, role: user.role },
   });

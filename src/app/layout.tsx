@@ -59,6 +59,14 @@ export default async function RootLayout({
                     </span>
                     <span className={navLink}>{user.username}</span>
                   </Link>
+                  {user.role === "ADMIN" && (
+                    <Link
+                      href="/admin/logs"
+                      className="rounded border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:border-zinc-900 hover:text-zinc-900"
+                    >
+                      操作日志
+                    </Link>
+                  )}
                 </>
               ) : (
                 <>

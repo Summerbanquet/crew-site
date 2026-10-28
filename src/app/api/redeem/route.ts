@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { logOp } from "@/lib/oplog";
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
@@ -8,7 +9,7 @@ export async function POST(req: Request) {
   const { itemId } = await req.json();
 
   try {
-    await prisma.$transaction(async (tx) => {
+    const { itemName, cost } = await prisma.$transaction(async (tx) => {
       const item = await tx.item.findUnique({ where: { id: Number(itemId) } });
       if (!item || !item.active) throw new Error("商品不存在或已下架");
       const me = await tx.user.findUnique({ where: { id: user.id } });
@@ -33,9 +34,25 @@ export async function POST(req: Request) {
           content: `兑换《${item.name}》成功，积分 -${item.cost}`,
         },
       });
+      return { itemName: item.name, cost: item.cost };
+    });
+    await logOp({
+      userId: user.id,
+      username: user.username,
+      action: "REDEEM",
+      detail: `兑换《${itemName}》（-${cost} 分）`,
+      req,
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
+    await logOp({
+      userId: user.id,
+      username: user.username,
+      action: "REDEEM",
+      detail: `兑换商品 #${itemId} 失败：${e instanceof Error ? e.message : "未知错误"}`,
+      ok: false,
+      req,
+    });
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "兑换失败" },
       { status: 400 }

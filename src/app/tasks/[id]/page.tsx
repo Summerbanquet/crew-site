@@ -10,6 +10,7 @@ type Task = {
   title: string;
   content: string;
   points: number;
+  headcount: number;
   deadline: string | null;
   status: string;
   createdAt: string;
@@ -114,6 +115,9 @@ export default function TaskDetailPage() {
         </div>
         <p className="mt-3 whitespace-pre-wrap text-sm text-zinc-700">{task.content}</p>
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-3 text-xs text-zinc-400">
+          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-600">
+            招 {task.headcount} 人
+          </span>
           <span>发布人：{task.publisher.username}</span>
           {task.deadline && <span>截止：{new Date(task.deadline).toLocaleString("zh-CN")}</span>}
           {task.status === "OPEN" && pending.length > 0 && (

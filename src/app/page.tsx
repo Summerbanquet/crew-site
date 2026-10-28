@@ -9,6 +9,7 @@ type Task = {
   title: string;
   content: string;
   points: number;
+  headcount: number;
   deadline: string | null;
   status: string;
   publisher: { username: string };
@@ -112,6 +113,9 @@ export default function TaskHall() {
             </div>
             <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-600">{t.content}</p>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-zinc-400">
+              <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-600">
+                招 {t.headcount} 人
+              </span>
               <span>发布人：{t.publisher.username}</span>
               {t.deadline && <span>截止：{new Date(t.deadline).toLocaleString("zh-CN")}</span>}
               {t.status === "OPEN" && pending.length > 0 && (

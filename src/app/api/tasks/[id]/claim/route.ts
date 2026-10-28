@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { logOp } from "@/lib/oplog";
 
 // 接取：任务保持招募中，多人都能接取，等发布人从中选择
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -12,7 +13,7 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "请先登录再接单" }, { status: 401 });
 
   try {
-    const claim = await prisma.$transaction(async (tx) => {
+    const { c, taskTitle } = await prisma.$transaction(async (tx) => {
       const task = await tx.task.findUnique({ where: { id: Number(id) } });
       if (!task) throw new Error("任务不存在");
       if (task.status !== "OPEN") throw new Error("该任务已结束接取");
@@ -46,10 +47,25 @@ export async function POST(
           },
         ],
       });
-      return c;
+      return { c, taskTitle: task.title };
     });
-    return NextResponse.json({ claim });
+    await logOp({
+      userId: user.id,
+      username: user.username,
+      action: "CLAIM",
+      detail: `接取任务《${taskTitle}》`,
+      req,
+    });
+    return NextResponse.json({ claim: c });
   } catch (e) {
+    await logOp({
+      userId: user.id,
+      username: user.username,
+      action: "CLAIM",
+      detail: `接取任务 #${id} 失败：${e instanceof Error ? e.message : "未知错误"}`,
+      ok: false,
+      req,
+    });
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "接取失败" },
       { status: 400 }

@@ -73,6 +73,14 @@ export default function NotificationCenter() {
     setList((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  // 点开面板停留满 3 秒视为已读，自动消除红点；不满 3 秒关闭则不计
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(markAllRead, 3000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   return (
     <div ref={boxRef} className="relative">
       <button

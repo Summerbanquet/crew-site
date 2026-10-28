@@ -29,6 +29,7 @@ model Task {
   title       String
   content     String
   points      Int // 完成后被选中的接单人可得的积分
+  headcount   Int         @default(1) // 需要人数（发布时必填）
   deadline    DateTime?
   status      String      @default("OPEN") // OPEN 招募中（可多人接取）/ DONE 已完成 / CANCELLED 已取消
   createdAt   DateTime    @default(now())
@@ -92,5 +93,18 @@ model Notification {
   title     String
   content   String
   read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// 操作日志：前台关键操作全记录，管理员后台可查
+// 弱关联（不建外键）：用户注销后日志仍保留可读
+model OperationLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  username  String
+  action    String // REGISTER/LOGIN/LOGOUT/PUBLISH/CLAIM/SELECT/REDEEM/ITEM_CREATE/ITEM_UPDATE/ITEM_SHIP
+  detail    String
+  ok        Boolean  @default(true)
+  ip        String?
   createdAt DateTime @default(now())
 }

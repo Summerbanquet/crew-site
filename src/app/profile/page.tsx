@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type Me = {
-  user: { id: number; username: string; role: string; phone: string | null; points: number };
+  user: { id: number; username: string; role: string; wechat: string | null; points: number };
   pointLogs: { id: number; delta: number; reason: string; createdAt: string }[];
   publishedTasks: {
     id: number;
@@ -87,7 +87,10 @@ export default function ProfilePage() {
         {user.role === "ADMIN" && (
           <span className="rounded border border-zinc-900 bg-white px-2 py-0.5 text-xs text-zinc-900">管理员</span>
         )}
-        {user.phone && <span className="text-sm text-zinc-400">{user.phone}</span>}
+        {user.role === "SHOOTER" && (
+          <span className="rounded border border-zinc-900 bg-white px-2 py-0.5 text-xs text-zinc-900">拍摄</span>
+        )}
+        {user.wechat && <span className="text-sm text-zinc-400">微信群昵称：{user.wechat}</span>}
         <button
           onClick={logout}
           className="ml-auto rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-600 hover:bg-zinc-100"
@@ -134,7 +137,7 @@ export default function ProfilePage() {
             {publishedTasks.length === 0 && (
               <li className="py-2 text-zinc-400">
                 还没发布过任务，
-                {user.role === "ADMIN" && <Link href="/tasks/new" className="underline">去发布</Link>}
+                {(user.role === "ADMIN" || user.role === "SHOOTER") && <Link href="/tasks/new" className="underline">去发布</Link>}
               </li>
             )}
             {publishedTasks.map((t) => (

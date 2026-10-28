@@ -83,7 +83,7 @@ export default function NewTaskPage() {
         >
           {loading ? "发布中..." : "发布"}
         </button>
-        <p className="text-center text-xs text-zinc-400">仅管理员可发布</p>
+        <p className="text-center text-xs text-zinc-400">拍摄身份或管理员可发布</p>
       </form>
     </div>
   );

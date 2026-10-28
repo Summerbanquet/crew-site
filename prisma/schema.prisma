@@ -7,18 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 用户表：账号密码登录，手机号仅作资料不验证
+// 用户表：账号密码登录，微信群昵称仅作资料不验证
 model User {
   id             Int          @id @default(autoincrement())
   username       String       @unique
   passwordHash   String
-  phone          String?
-  role           String       @default("USER") // USER 普通用户 / ADMIN 管理员
+  wechat         String? // 微信群昵称，选填，方便剧组统计对名
+   role           String       @default("ACTOR") // ACTOR 普通演员（接单）/ SHOOTER 拍摄（发布+接单）/ ADMIN 管理员
   points         Int          @default(0)
   createdAt      DateTime     @default(now())
   publishedTasks Task[]       @relation("Publisher")
   claims         TaskClaim[]
   pointLogs      PointLog[]
+    redeems     RedeemLog[]
 }
 
 // 任务表：发布 → 接单 → 确认完成
@@ -55,4 +56,28 @@ model PointLog {
   delta     Int // 正数加、负数减
   reason    String
   createdAt DateTime @default(now())
+}
+
+// 商城商品
+model Item {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  icon        String      @default("🎁")
+  cost        Int
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  redeems     RedeemLog[]
+}
+
+// 兑换记录
+model RedeemLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  itemId      Int
+  item        Item     @relation(fields: [itemId], references: [id])
+  pointsSpent Int
+  status      String   @default("PENDING") // PENDING 待发货 / DONE 已完成
+  createdAt   DateTime @default(now())
 }

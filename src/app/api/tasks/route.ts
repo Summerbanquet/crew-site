@@ -14,12 +14,12 @@ export async function GET() {
   return NextResponse.json({ tasks });
 }
 
-// 发布任务（仅管理员）
+// 发布任务（拍摄或管理员）
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "只有管理员可以发布任务" }, { status: 403 });
+  if (user.role !== "SHOOTER" && user.role !== "ADMIN") {
+    return NextResponse.json({ error: "只有拍摄身份或管理员可以发布任务" }, { status: 403 });
   }
 
   const { title, content, points, deadline } = await req.json();

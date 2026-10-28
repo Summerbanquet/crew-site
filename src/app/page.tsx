@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Task = {
   id: number;
@@ -78,7 +79,11 @@ export default function TaskHall() {
               <span className={`rounded px-2 py-0.5 text-xs font-medium ${st.cls}`}>
                 {st.label}
               </span>
-              <h2 className="font-semibold">{t.title}</h2>
+              <h2 className="font-semibold">
+                <Link href={`/tasks/${t.id}`} className="hover:underline">
+                  {t.title}
+                </Link>
+              </h2>
               <span className="ml-auto text-sm text-amber-600">+{t.points} 积分</span>
             </div>
             <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-600">{t.content}</p>

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { createSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  const { username, password, phone } = await req.json();
+  const { username, password, wechat, role } = await req.json();
 
   if (!username || String(username).trim().length < 2) {
     return NextResponse.json({ error: "用户名至少 2 个字符" }, { status: 400 });
@@ -19,11 +19,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "用户名已被占用" }, { status: 409 });
   }
 
+  // 身份白名单：只认这两个值，其余一律当普通演员（管理员不开放注册）
+  const roleValue = role === "SHOOTER" ? "SHOOTER" : "ACTOR";
+
   const user = await prisma.user.create({
     data: {
       username: name,
       passwordHash: await bcrypt.hash(String(password), 10),
-      phone: phone ? String(phone).trim() : null,
+      wechat: wechat ? String(wechat).trim() : null,
+      role: roleValue,
     },
   });
 

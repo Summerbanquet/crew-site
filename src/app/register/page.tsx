@@ -8,7 +8,8 @@ export default function RegisterPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
+  const [wechat, setWechat] = useState("");
+  const [role, setRole] = useState<"ACTOR" | "SHOOTER">("ACTOR");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +20,7 @@ export default function RegisterPage() {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, phone }),
+      body: JSON.stringify({ username, password, wechat, role }),
     });
     setLoading(false);
     if (res.ok) {
@@ -50,10 +51,28 @@ export default function RegisterPage() {
         />
         <input
           className="w-full rounded border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
-          placeholder="手机号（选填，用于剧组统计联系）"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          placeholder="微信群昵称（选填，方便剧组统计对名）"
+          value={wechat}
+          onChange={(e) => setWechat(e.target.value)}
         />
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setRole("ACTOR")}
+            className={`rounded border p-2 text-left text-sm ${role === "ACTOR" ? "border-2 border-zinc-900" : "border-zinc-300 text-zinc-500"}`}
+          >
+            <span className="font-medium">普通演员</span>
+            <span className="block text-xs text-zinc-400">接任务赚积分</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole("SHOOTER")}
+            className={`rounded border p-2 text-left text-sm ${role === "SHOOTER" ? "border-2 border-zinc-900" : "border-zinc-300 text-zinc-500"}`}
+          >
+            <span className="font-medium">拍摄</span>
+            <span className="block text-xs text-zinc-400">发布任务 + 接任务</span>
+          </button>
+        </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           disabled={loading}

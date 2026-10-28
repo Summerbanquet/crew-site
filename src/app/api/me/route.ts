@@ -34,7 +34,7 @@ export async function GET() {
       id: user.id,
       username: user.username,
       role: user.role,
-      phone: user.phone,
+      wechat: user.wechat,
       points: user.points,
     },
     pointLogs,
